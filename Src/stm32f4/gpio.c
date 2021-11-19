@@ -6,98 +6,103 @@
 #include "bit_operations.h"
 
 
-volatile GPIOx_t *const GPIOA = (GPIOx_t *)GPIOA_BASEADDR;
-volatile GPIOx_t *const GPIOB = (GPIOx_t *)GPIOB_BASEADDR;
-volatile GPIOx_t *const GPIOC = (GPIOx_t *)GPIOC_BASEADDR;
-volatile GPIOx_t *const GPIOD = (GPIOx_t *)GPIOD_BASEADDR;
-volatile GPIOx_t *const GPIOE = (GPIOx_t *)GPIOE_BASEADDR;
-volatile GPIOx_t *const GPIOF = (GPIOx_t *)GPIOF_BASEADDR;
-volatile GPIOx_t *const GPIOG = (GPIOx_t *)GPIOG_BASEADDR;
-volatile GPIOx_t *const GPIOH = (GPIOx_t *)GPIOH_BASEADDR;
-volatile GPIOx_t *const GPIOI = (GPIOx_t *)GPIOI_BASEADDR;
+GPIOx GPIOA = (GPIOx)GPIOA_BASEADDR;
+GPIOx GPIOB = (GPIOx)GPIOB_BASEADDR;
+GPIOx GPIOC = (GPIOx)GPIOC_BASEADDR;
+GPIOx GPIOD = (GPIOx)GPIOD_BASEADDR;
+GPIOx GPIOE = (GPIOx)GPIOE_BASEADDR;
+GPIOx GPIOF = (GPIOx)GPIOF_BASEADDR;
+GPIOx GPIOG = (GPIOx)GPIOG_BASEADDR;
+GPIOx GPIOH = (GPIOx)GPIOH_BASEADDR;
+GPIOx GPIOI = (GPIOx)GPIOI_BASEADDR;
 
-static uint8_t get_GPIOx_offset_in_RCC_register(volatile GPIOx_t *const port)
+static uint8_t get_GPIOx_offset_in_RCC_AHB1_register(GPIOx port)
 {
     uint8_t offset;
-    if (port == GPIOA) {
+    if (port == GPIOA)
         offset = 0;
-    } else if (port == GPIOB) {
+    else if (port == GPIOB)
         offset = 1;
-    } else if (port == GPIOC) {
+    else if (port == GPIOC)
         offset = 2;
-    } else if (port == GPIOD) {
+    else if (port == GPIOD)
         offset = 3;
-    } else if (port == GPIOE) {
+    else if (port == GPIOE)
         offset = 4;
-    } else if (port == GPIOF) {
+    else if (port == GPIOF)
         offset = 5;
-    } else if (port == GPIOG) {
+    else if (port == GPIOG)
         offset = 6;
-    } else if (port == GPIOH) {
+    else if (port == GPIOH)
         offset = 7;
-    } else if (port == GPIOI) {
+    else if (port == GPIOI)
         offset = 8;
-    } else {
-        /* No such GPIO port */
-        exit(EXIT_FAILURE);
-    }
+    else
+        exit(EXIT_FAILURE);  /* No such GPIO port */
+
     return offset;
 }
 
-void enable_GPIOx_clock(volatile GPIOx_t *const port)
+void enable_GPIOx_clock(GPIOx port)
 {
-    uint8_t offset = get_GPIOx_offset_in_RCC_register(port);
+    uint8_t offset = get_GPIOx_offset_in_RCC_AHB1_register(port);
     SET_BIT(RCC->AHB1ENR, offset);
 }
 
-void reset_GPIOx(volatile GPIOx_t *const port)
+void reset_GPIOx(GPIOx port)
 {
-    uint8_t offset = get_GPIOx_offset_in_RCC_register(port);
+    uint8_t offset = get_GPIOx_offset_in_RCC_AHB1_register(port);
     CLEAR_BIT(RCC->AHB1RSTR, offset);
 }
 
-void set_GPIOx_mode(volatile GPIOx_t *const port, GPIO_mode_t mode, uint16_t pin_mask)
+void set_GPIOx_pin_mode(GPIO_mode mode, uint8_t pin, GPIOx port)
 {
-    for (uint8_t pin = 0; pin < GPIOx_PIN_COUNT; pin++) {
-        if (IS_BIT_SET(pin_mask, pin)) {
-            port->mode &= ~(0x3 << (pin * 2));
-            port->mode |= mode << (pin * 2);
-        }
-    }
+    port->mode &= ~(0x3 << (pin * 2));
+    port->mode |= mode << (pin * 2);
 }
 
-void set_GPIOx_pull_up_down_configuration(volatile GPIOx_t *const port, GPIO_pull_up_down_config_t configuration, uint16_t pin_mask)
+void set_GPIOx_port_mode(GPIO_mode mode, GPIOx port)
 {
-    for (uint8_t pin = 0; pin < GPIOx_PIN_COUNT; pin++) {
-        if (IS_BIT_SET(pin_mask, pin)) {
-            port->pull_up_down &= ~(0x3 << (pin * 2));
-            port->pull_up_down |= configuration << (pin * 2);
-        }
-    }
+    // 0x55555555 means combination `01` 16 times that fits 32bits register
+    // if we multiply this num by `mode`, we will get the same mode value for every pin
+    port->mode &= ~((uint32_t)0x55555555 * 0x3);
+    port->mode |= 0x55555555 * mode;
 }
 
-void write_into_GPIOx_output_register(volatile GPIOx_t *const port, uint16_t data, uint16_t pin_mask)
+void set_GPIOx_pin_pull_up_down_mode(GPIO_pull_up_down_mode mode, uint8_t pin, GPIOx port)
 {
-    for (uint8_t pin = 0; pin < GPIOx_PIN_COUNT; pin++) {
-        if (IS_BIT_SET(pin_mask, pin)) {
-            if (IS_BIT_SET(data, pin))
-                SET_BIT(port->output_data, pin);
-            else
-                CLEAR_BIT(port->output_data, pin);
-        }
-    }
+    port->pull_up_down &= ~(0x3 << (pin * 2));
+    port->pull_up_down |= mode << (pin * 2);
 }
 
-uint16_t read_from_GPIOx_input_register(volatile GPIOx_t *const port, uint16_t pin_mask)
+void set_GPIOx_port_pull_up_down_mode(GPIO_pull_up_down_mode mode, uint16_t pin, GPIOx port)
 {
-    uint16_t data = 0x0;
-    for (uint8_t pin = 0; pin < GPIOx_PIN_COUNT; pin++) {
-        if (IS_BIT_SET(pin_mask, pin)) {
-            if (IS_BIT_SET(port->input_data, pin))
-                data += 0x1;
-            data <<= 1;
-        }
-    }
+    // 0x55555555 means combination `01` 16 times that fits 32bits register
+    // if we multiply this num by `mode`, we will get the same mode value for every pin
+    port->pull_up_down &= ~((uint32_t)0x55555555 * 0x3);
+    port->pull_up_down |= 0x55555555 * mode;
+}
 
-    return data;
+void write_into_GPIOx_pin(uint8_t data, uint8_t pin, GPIOx port)
+{
+    if (GET_BIT(data, 0))
+        SET_BIT(port->output_data, pin);
+    else
+        CLEAR_BIT(port->output_data, pin);
+}
+
+void write_into_GPIOx_port(uint16_t data, GPIOx port)
+{
+    port->output_data &= ~(0xf);
+    port->output_data |= data;
+}
+
+uint8_t read_from_GPIOx_pin(uint8_t pin, GPIOx port)
+{
+    return (uint8_t)GET_BIT(port->input_data, pin);
+}
+
+uint16_t read_from_GPIOx_port(GPIOx port)
+{
+    return port->input_data;
 }

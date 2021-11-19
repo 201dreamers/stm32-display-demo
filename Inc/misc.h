@@ -4,6 +4,6 @@
 #include <stdint.h>
 
 
-void software_delay(uint32_t ms);
+void software_delay_us(uint32_t us);
 
 #endif /* _MISC_H */

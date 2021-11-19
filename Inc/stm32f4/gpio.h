@@ -18,9 +18,9 @@ typedef struct {
     volatile uint32_t output_data;
     volatile uint32_t bit_set_reset;
     volatile uint32_t config_lock;
-    volatile uint16_t alternate_function_low;
-    volatile uint16_t alternate_function_high;
-} GPIOx_t;
+    volatile uint32_t alternate_function_low;
+    volatile uint32_t alternate_function_high;
+} GPIOx_regs;
 
 typedef enum {
     GPIOA_BASEADDR = AHB1PERIPH_BASEADDR + GPIOA_ADDR_OFFSET,
@@ -32,37 +32,44 @@ typedef enum {
     GPIOG_BASEADDR = AHB1PERIPH_BASEADDR + GPIOG_ADDR_OFFSET,
     GPIOH_BASEADDR = AHB1PERIPH_BASEADDR + GPIOH_ADDR_OFFSET,
     GPIOI_BASEADDR = AHB1PERIPH_BASEADDR + GPIOI_ADDR_OFFSET
-} GPIOx_addr_t;
+} GPIOx_addr;
 
 typedef enum {
     GPIO_INPUT_MODE = 0x0,
     GPIO_OUTPUT_MODE = 0x1,
     GPIO_ALTERNATE_FUNCTION_MODE = 0x2,
     GPIO_ANALOG_MODE = 0x3
-} GPIO_mode_t;
+} GPIO_mode;
 
 typedef enum {
     GPIO_NO_PULL_UP_DOWN = 0x0,
     GPIO_PULL_UP = 0x1,
     GPIO_PULL_DOWN = 0x2,
     // RESERVED = 0x3
-} GPIO_pull_up_down_config_t;
+} GPIO_pull_up_down_mode;
 
-extern volatile GPIOx_t *const GPIOA;
-extern volatile GPIOx_t *const GPIOB;
-extern volatile GPIOx_t *const GPIOC;
-extern volatile GPIOx_t *const GPIOD;
-extern volatile GPIOx_t *const GPIOE;
-extern volatile GPIOx_t *const GPIOF;
-extern volatile GPIOx_t *const GPIOG;
-extern volatile GPIOx_t *const GPIOH;
-extern volatile GPIOx_t *const GPIOI;
+typedef volatile GPIOx_regs *const GPIOx;
 
-void enable_GPIOx_clock(volatile GPIOx_t *const port);
-void reset_GPIOx(volatile GPIOx_t *const port);
-void set_GPIOx_mode(volatile GPIOx_t *const port, GPIO_mode_t mode, uint16_t pin_mask);
-void set_GPIOx_pull_up_down_configuration(volatile GPIOx_t *const port, GPIO_pull_up_down_config_t configuration, uint16_t pin_mask);
-void write_into_GPIOx_output_register(volatile GPIOx_t *const port, uint16_t data, uint16_t pin_mask);
-uint16_t read_from_GPIOx_input_register(volatile GPIOx_t *const port, uint16_t pin_mask);
+extern GPIOx GPIOA;
+extern GPIOx GPIOB;
+extern GPIOx GPIOC;
+extern GPIOx GPIOD;
+extern GPIOx GPIOE;
+extern GPIOx GPIOF;
+extern GPIOx GPIOG;
+extern GPIOx GPIOH;
+extern GPIOx GPIOI;
+
+
+void enable_GPIOx_clock(GPIOx port);
+void reset_GPIOx(GPIOx port);
+void set_GPIOx_pin_mode(GPIO_mode mode, uint8_t pin, GPIOx port);
+void set_GPIOx_port_mode(GPIO_mode mode, GPIOx port);
+void set_GPIOx_pin_pull_up_down_mode(GPIO_pull_up_down_mode mode, uint8_t pin, GPIOx port);
+void set_GPIOx_port_pull_up_down_mode(GPIO_pull_up_down_mode mode, uint16_t pin, GPIOx port);
+void write_into_GPIOx_pin(uint8_t data, uint8_t pin, GPIOx port);
+void write_into_GPIOx_port(uint16_t data, GPIOx port);
+uint8_t read_from_GPIOx_pin(uint8_t pin, GPIOx port);
+uint16_t read_from_GPIOx_port(GPIOx port);
 
 #endif /* _STM32F4_GPIO_H */

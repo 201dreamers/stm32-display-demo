@@ -41,8 +41,8 @@ typedef struct {
     volatile uint32_t DCKCFGR;
     volatile uint32_t CKGATENR;
     volatile uint32_t DCKCFGR2;
-} RCC_registers_t;
+} RCC_regs;
 
-extern volatile RCC_registers_t *const RCC;
+extern volatile RCC_regs *const RCC;
 
 #endif /* _STM32F4_RCC_H */

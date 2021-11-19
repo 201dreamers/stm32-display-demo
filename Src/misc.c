@@ -3,8 +3,8 @@
 #include "misc.h"
 
 
-void software_delay(uint32_t ms)
+void software_delay_us(uint32_t us)
 {
-    uint16_t iterations_in_1_ms = 2000;
-    for (uint32_t i = 0; i < (iterations_in_1_ms * ms); i++);
+    uint32_t iterations_in_1_us = 2;
+    for (uint32_t i = 0; i < (iterations_in_1_us * us); i++);
 }

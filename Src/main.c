@@ -13,37 +13,27 @@
 
 static void print_hello_screen()
 {
-    send_string_to_display("Demo: VDD->PD15");
+    send_string_to_display("Demo:VDD->PD15");
     return_home();
-}
-
-static void print_all_symbols_pattern()
-{
-    clear_display();
-    for(uint8_t character = 0; character <= 0xff;) {
-        return_home();
-        for (uint8_t i = 0; i < (DISP_LINE_LENGTH / 2); i++) {
-            send_character_to_display(character++);
-            send_character_to_display(' ');
-            software_delay(200);
-        }
-    }
 }
 
 int main(void)
 {
-    enable_GPIOx_clock(DISP_CONNECTED_PORT);
-    reset_GPIOx(DISP_CONNECTED_PORT);
-    set_GPIOx_mode(DISP_CONNECTED_PORT, GPIO_OUTPUT_MODE, DISP_CONNECTED_GPIO_PINS_MASK);
-
-    enable_GPIOx_clock(GPIOD);
-    reset_GPIOx(GPIOD);
-    set_GPIOx_mode(GPIOD, GPIO_INPUT_MODE, (1 << 15));
+    struct disp_bus display_bus = {
+        .db4 = {.gpio_pin = 12, .gpio_port = GPIOE},
+        .db5 = {.gpio_pin = 13, .gpio_port = GPIOE},
+        .db6 = {.gpio_pin = 14, .gpio_port = GPIOE},
+        .db7 = {.gpio_pin = 15, .gpio_port = GPIOE},
+        .ena = {.gpio_pin = 11, .gpio_port = GPIOE},
+        .rw = {.gpio_pin = 10, .gpio_port = GPIOE},
+        .rs = {.gpio_pin = 7, .gpio_port = GPIOE},
+    };
 
     initialize_display(
-        DISP_MODE_4_BIT,
+        &display_bus,
+        DISP_4_BITS_BUS_MODE,
         DISP_TWO_LINE_MODE,
-        DISP_FONT_5x8_DOTS,
+        DISP_FONT_5x11_DOTS,
         DISP_STATE_ON,
         DISP_CURSOR_STATE_ON,
         DISP_CURSOR_BLINK_ON,
@@ -51,11 +41,8 @@ int main(void)
         DISP_DONT_SHIFT
     );
 
-    for(;;) {
-        if (IS_BIT_SET(GPIOD->input_data, 15)) {
-            print_all_symbols_pattern();
-        } else {
-            print_hello_screen();
-        }
-    }
+    // TODO: fix read_busy_flag and read_cursor_address (merge)
+
+    print_hello_screen();
+    for(;;);
 }
