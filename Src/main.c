@@ -2,7 +2,7 @@
 #include <stdio.h>
 
 #include "stm32f4/gpio.h"
-#include "wh1602b/display.h"
+#include "wh1602b.h"
 #include "bit_operations.h"
 #include "misc.h"
 
@@ -13,7 +13,7 @@
 
 static void print_hello_screen()
 {
-    send_string_to_display("Demo:VDD->PD15");
+    send_string_to_display("Test");
     return_home();
 }
 
@@ -31,7 +31,7 @@ int main(void)
 
     initialize_display(
         &display_bus,
-        DISP_4_BITS_BUS_MODE,
+        DISP_4_BIT_BUS_MODE,
         DISP_TWO_LINE_MODE,
         DISP_FONT_5x11_DOTS,
         DISP_STATE_ON,
